@@ -31,7 +31,7 @@ type stack []uintptr
 type Error struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
-	// Detail contain message that more human-friendly which may includes long instruction to fix the xerror
+	// Detail contains a more human-friendly message which may include long instructions to fix the error
 	Caller    string         `json:"caller,omitempty"`
 	Detail    string         `json:"detail,omitempty"`
 	AppName   string         `json:"app_name,omitempty"`
@@ -68,7 +68,8 @@ func (t *Timestamp) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	*t = Timestamp(time.Unix(n/1_000_000_000, n%1_000_000_000))
+	// Convert milliseconds to seconds and nanoseconds
+	*t = Timestamp(time.Unix(n/1000, (n%1000)*1_000_000))
 	return nil
 }
 

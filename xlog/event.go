@@ -12,8 +12,8 @@ import (
 )
 
 type rawEvent struct {
-	fields map[string]interface{}
-	data   map[string]interface{}
+	fields map[string]any
+	data   map[string]any
 }
 
 type LogEvent struct {
@@ -35,15 +35,15 @@ func newLogEvent(level zapcore.Level) *LogEvent {
 		appName: appName,
 		pretty:  false,
 		raw: rawEvent{
-			fields: make(map[string]interface{}),
-			data:   make(map[string]interface{}),
+			fields: make(map[string]any),
+			data:   make(map[string]any),
 		},
 	}
 	ev.fields = append(ev.fields, zap.Any("app_name", appName))
 	return ev
 }
 
-func (l *LogEvent) addField(key string, value interface{}) {
+func (l *LogEvent) addField(key string, value any) {
 	l.fields = append(l.fields, zap.Any(key, value))
 	l.raw.fields[key] = value
 }
@@ -89,7 +89,7 @@ func (l *LogEvent) AddCallerSkip(n int) *LogEvent {
 	return l
 }
 
-func (l *LogEvent) Field(key string, val interface{}) *LogEvent {
+func (l *LogEvent) Field(key string, val any) *LogEvent {
 	l.data = append(l.data, zap.Any(key, val))
 	l.raw.data[key] = val
 	return l

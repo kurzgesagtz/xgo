@@ -57,6 +57,14 @@ type argc[V any] struct {
 
 func MapToSliceAsync[I any, O any](ctx context.Context, n int, process func(ctx context.Context, value I) (O, error), values []I) ([]O, error) {
 	valuesSize := len(values)
+	if valuesSize == 0 {
+		return []O{}, nil
+	}
+
+	// Use a smaller number of workers if there are fewer values than requested workers
+	if n > valuesSize {
+		n = valuesSize
+	}
 
 	inputs := make([]chan argc[I], n)
 	for i := range inputs {
@@ -68,66 +76,93 @@ func MapToSliceAsync[I any, O any](ctx context.Context, n int, process func(ctx 
 		outs[i] = make(chan *argc[O])
 	}
 
-	for i, value := range values {
-		go func() {
-			inputs[i%n] <- argc[I]{index: i, v: &value}
-		}()
-	}
+	// Create a context that can be canceled
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	for _, input := range inputs {
-		go func() {
+	// Send input values to worker channels
+	go func() {
+		for i, value := range values {
+			select {
+			case <-ctx.Done():
+				return
+			case inputs[i%n] <- argc[I]{index: i, v: &value}:
+			}
+		}
+		// Close input channels after all values are sent
+		for _, input := range inputs {
+			close(input)
+		}
+	}()
+
+	// Start worker goroutines
+	for i, input := range inputs {
+		go func(i int, input chan argc[I]) {
 			for arg := range input {
-				result, err := process(ctx, *arg.v)
-				if err != nil {
-					outs[arg.index%n] <- &argc[O]{
-						err: err,
-					}
+				select {
+				case <-ctx.Done():
 					return
-				}
-				outs[arg.index%n] <- &argc[O]{
-					index: arg.index,
-					v:     &result,
+				default:
+					result, err := process(ctx, *arg.v)
+					if err != nil {
+						outs[arg.index%n] <- &argc[O]{
+							err: err,
+						}
+					} else {
+						outs[arg.index%n] <- &argc[O]{
+							index: arg.index,
+							v:     &result,
+						}
+					}
 				}
 			}
-		}()
+			// Close output channel when input channel is closed
+			close(outs[i])
+		}(i, input)
 	}
 
-	count := make(chan error, n)
+	count := make(chan error, valuesSize)
+	result := make([]O, valuesSize)
 
-	result := make([]O, len(values))
+	// Start collector goroutines
 	for _, out := range outs {
-		go func() {
+		go func(out chan *argc[O]) {
 			for o := range out {
 				if o != nil {
 					if o.err != nil {
-						count <- o.err
+						select {
+						case <-ctx.Done():
+							return
+						case count <- o.err:
+						}
 					} else {
 						result[o.index] = *o.v
-						count <- nil
+						select {
+						case <-ctx.Done():
+							return
+						case count <- nil:
+						}
 					}
 				}
 			}
-		}()
+		}(out)
 	}
 
+	// Collect results
 	size := 0
-	for err := range count {
-		if err != nil {
-			return nil, err
-		}
-		size++
-		if size == valuesSize {
-			break
+	for size < valuesSize {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case err := <-count:
+			if err != nil {
+				cancel() // Cancel all goroutines
+				return nil, err
+			}
+			size++
 		}
 	}
 
-	for _, input := range inputs {
-		close(input)
-	}
-	for _, out := range outs {
-		close(out)
-	}
 	close(count)
-
 	return result, nil
 }

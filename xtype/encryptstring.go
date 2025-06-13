@@ -7,7 +7,7 @@ import (
 	"database/sql/driver"
 	"encoding/hex"
 	"fmt"
-	"github.com/kurzgesagtz/xgo/internal/ptr"
+	"github.com/gotidy/ptr"
 	"io"
 	"strings"
 )
@@ -141,7 +141,7 @@ func dynamicEncrypt(str string) string {
 	return str
 }
 
-func (es *EncryptString) Scan(value interface{}) error {
+func (es *EncryptString) Scan(value any) error {
 	if es == nil {
 		return nil
 	}

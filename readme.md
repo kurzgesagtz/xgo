@@ -10,6 +10,7 @@ and general-purpose utilities.
     - Error code management
     - Application name context
     - Timestamp tracking
+    - gRPC integration
 
 - **Advanced Logging (xlog)**
     - Structured logging with Zap
@@ -19,16 +20,58 @@ and general-purpose utilities.
     - Support for Gin web framework
 
 - **Type Utilities (xtype)**
+    - Date handling with custom JSON marshaling
+    - Phone number validation and formatting
+    - Secure string encryption and hashing
     - Safe type conversions
-    - Type checking helpers
     - Common type definitions
-    - Generic type utilities
 
 - **General Utilities (xutil)**
-    - String manipulation
-    - Time operations
-    - Slice operations
-    - Map utilities
-    - Math functions
+    - Generic mapping functions
+    - Asynchronous processing
+    - Enum handling
+    - Type-safe conversions
 
 ## Installation
+
+```bash
+go get github.com/kurzgesagtz/xgo
+```
+
+## Usage
+
+### Error Handling
+
+```go
+import "github.com/kurzgesagtz/xgo/xerror"
+
+// Create a new error with a code
+err := xerror.NewError(xerror.ErrCodeNotFound, 
+    xerror.WithMessage("User not found"))
+
+// Check error code
+if xerror.IsErrorCode(err, xerror.ErrCodeNotFound) {
+    // Handle not found error
+}
+```
+
+### Logging
+
+```go
+import "github.com/kurzgesagtz/xgo/xlog"
+
+// Simple logging
+xlog.Info().Msg("Application started")
+
+// Structured logging
+xlog.Debug().
+    Field("user_id", 123).
+    Field("action", "login").
+    Msg("User logged in")
+
+// Error logging
+err := someFunction()
+if err != nil {
+    xlog.Error().Err(err).Msg("Operation failed")
+}
+```

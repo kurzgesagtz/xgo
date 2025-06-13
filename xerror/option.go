@@ -32,10 +32,10 @@ func WithTimestamp(t time.Time) ErrorOptionFunc {
 	}
 }
 
-func WithJSONInfo(key string, value interface{}) ErrorOptionFunc {
+func WithJSONInfo(key string, value any) ErrorOptionFunc {
 	return func(err *Error) *Error {
 		if err.Info == nil {
-			err.Info = make(map[string]interface{})
+			err.Info = make(map[string]any)
 		}
 		err.Info[key] = value
 		return err

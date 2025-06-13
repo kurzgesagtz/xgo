@@ -79,7 +79,7 @@ func Fatal() *LogEvent {
 	return newLogEvent(zapcore.FatalLevel)
 }
 
-func PrettyPrint(obj ...interface{}) {
+func PrettyPrint(obj ...any) {
 	for _, o := range obj {
 		Debug().AddCallerSkip(1).Pretty().Field(ObjDebugPrettyPrint, o).Msg("pretty print")
 	}

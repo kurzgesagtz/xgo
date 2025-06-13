@@ -2,7 +2,7 @@ package xtype
 
 import (
 	"encoding/json"
-	"github.com/kurzgesagtz/xgo/internal/ptr"
+	"github.com/gotidy/ptr"
 	"strings"
 	"time"
 )

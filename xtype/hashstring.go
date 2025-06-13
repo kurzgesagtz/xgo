@@ -11,6 +11,9 @@ import (
 	"gorm.io/gorm/schema"
 )
 
+// DefaultBcryptCost is the default cost for bcrypt hashing
+var DefaultBcryptCost = 10
+
 type HashString struct {
 	hash bool
 	cost int
@@ -31,7 +34,7 @@ func NewHashString(str string) HashString {
 	}
 }
 
-func (hs *HashString) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue interface{}) (err error) {
+func (hs *HashString) Scan(ctx context.Context, field *schema.Field, dst reflect.Value, dbValue any) (err error) {
 	if hs == nil {
 		return nil
 	}
@@ -53,7 +56,7 @@ func (hs *HashString) Scan(ctx context.Context, field *schema.Field, dst reflect
 			str:  "",
 		}
 	default:
-		return xerror.NewError(xerror.ErrCodeInternalError, xerror.WithMessage(fmt.Sprintf("unsupported data %#v", dbValue)))
+		return xerror.NewError(xerror.ErrCodeInternalError, xerror.WithMessage(fmt.Sprintf("unsupported data type %#v", dbValue)))
 	}
 	if hs.str == "" {
 		return nil
@@ -62,7 +65,7 @@ func (hs *HashString) Scan(ctx context.Context, field *schema.Field, dst reflect
 	return err
 }
 
-func (hs *HashString) Value(ctx context.Context, field *schema.Field, dst reflect.Value, fieldValue interface{}) (interface{}, error) {
+func (hs *HashString) Value(ctx context.Context, field *schema.Field, dst reflect.Value, fieldValue any) (any, error) {
 	if hs == nil {
 		return nil, nil
 	}
@@ -73,7 +76,7 @@ func (hs *HashString) Value(ctx context.Context, field *schema.Field, dst reflec
 	if hs.str == "" {
 		return nil, nil
 	}
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(hs.str), 10)
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(hs.str), DefaultBcryptCost)
 	return string(bytes), nil
 }
 

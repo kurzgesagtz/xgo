@@ -46,7 +46,7 @@ func (sw *streamClientWrapper) Header() (metadata.MD, error) {
 	return md, nil
 }
 
-func (sw *streamClientWrapper) RecvMsg(m interface{}) error {
+func (sw *streamClientWrapper) RecvMsg(m any) error {
 	err := sw.ClientStream.RecvMsg(m)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
@@ -61,7 +61,7 @@ func (sw *streamClientWrapper) RecvMsg(m interface{}) error {
 	return err
 }
 
-func (sw *streamClientWrapper) SendMsg(m interface{}) error {
+func (sw *streamClientWrapper) SendMsg(m any) error {
 	err := sw.ClientStream.SendMsg(m)
 	if err != nil {
 		err = sw.errorConvertor(err)

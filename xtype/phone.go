@@ -8,11 +8,7 @@ import (
 	"strings"
 )
 
-var PhoneNumberDefaultRegion = "TH"
-
-func init() {
-	PhoneNumberDefaultRegion = strings.ToUpper("TH")
-}
+var PhoneNumberDefaultRegion = strings.ToUpper("TH")
 
 type Phone struct {
 	phone *phonenumbers.PhoneNumber
@@ -38,7 +34,7 @@ func (p *Phone) GormDataType() string {
 	return "varchar(128)"
 }
 
-func (p *Phone) Scan(value interface{}) (err error) {
+func (p *Phone) Scan(value any) (err error) {
 	if p == nil {
 		return nil
 	}
